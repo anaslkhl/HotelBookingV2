@@ -21,5 +21,4 @@ public interface RoomRepository {
     List<Room> getAvailableRooms();
 
     List<Room> findAll();
-
 }

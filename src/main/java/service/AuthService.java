@@ -26,12 +26,10 @@ public class AuthService {
 
     public Client ajouterClient(Client client){
 
-        if(!EmailValidation.validateEmail(client.getEmail())
-                && !NameValidation.validateName(client.fullName)
-                && !PhoneValidation.validatePhone(client.getPhone())
-                && !PasswordValidation.validatePassword(client.getPassword())) {
-            throw new InvalidClientInfoException("Client information is invalid !");
-        }
+        EmailValidation.validateEmail(client.getEmail());
+        NameValidation.validateName(client.fullName);
+        PhoneValidation.validatePhone(client.getPhone());
+        PasswordValidation.validatePassword(client.getPassword());
 
             if(clientRepository.existsByEmail(client.getEmail())){
 
@@ -92,10 +90,10 @@ public class AuthService {
         if(client == null){
             throw new ClientNotFoundException("Client not found ! ");
         }
-        if(!NameValidation.validateName(fullName) || !EmailValidation.validateEmail(email)
-            || !PhoneValidation.validatePhone(phone)){
-            throw new InvalidClientInfoException("Client information not valid !! ");
-        }
+        NameValidation.validateName(fullName);
+        EmailValidation.validateEmail(email);
+        PhoneValidation.validatePhone(phone);
+
         if(!client.getEmail().equals(email) && clientRepository.existsByEmail(email)){
             throw new ClientAlreadyExistException("This email already used by another client !!");
         }

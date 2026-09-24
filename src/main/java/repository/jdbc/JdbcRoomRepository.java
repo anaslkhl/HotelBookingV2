@@ -28,7 +28,11 @@ public class JdbcRoomRepository implements RoomRepository {
         String sql = """
                     INSERT INTO rooms (room_number, room_type, status, capacity, price_per_night)
                     VALUES(?, ?, ?, ?, ?)
-                    
+                    ON CONFLICT (room_number) DO UPDATE SET
+                        room_type = EXCLUDED.room_type,
+                        status = EXCLUDED.status,
+                        capacity = EXCLUDED.capacity,
+                        price_per_night = EXCLUDED.price_per_night
                 """;
 
         try (PreparedStatement stmt = getConnection().prepareStatement(sql)) {

@@ -1,5 +1,6 @@
 package service;
 
+import model.enums.PaymentStatus;
 import util.ReservationValidation;
 import model.*;
 import exception.*;
@@ -22,12 +23,14 @@ public class ReservationService {
     private final ReservationRepository reservationRepository;
     private final ClientRepository clientRepository;
     private final RoomRepository roomRepository;
+    private final PaymentService paymentService;
 
 
-    public ReservationService(ReservationRepository reservationRepository, ClientRepository clientRepository, RoomRepository roomRepository){
+    public ReservationService(ReservationRepository reservationRepository, ClientRepository clientRepository, RoomRepository roomRepository, PaymentService paymentService){
         this.reservationRepository = reservationRepository;
         this.clientRepository = clientRepository;
-            this.roomRepository = roomRepository;
+        this.roomRepository = roomRepository;
+        this.paymentService = paymentService;
     }
 
 
@@ -58,6 +61,24 @@ public class ReservationService {
             throw new RoomCapacityException("This room capacity is insufficient ! ");
         }
 
+        if (!checkOut.isAfter(checkIn)) {
+
+            throw new InvalidReservationInfoException("Check-out date must be after check-in date ! ");
+        }
+
+        for (Reservation res : reservationRepository.getAllReservations()) {
+
+            if (res.getRoomNumber().equals(roomNumber)
+                    && res.getStatus().equals(ReservationStatus.CONFIRMED)) {
+
+                boolean overlap = checkIn.isBefore(res.getCheckOut()) && checkOut.isAfter(res.getCheckIn());
+
+                if (overlap) {
+                    throw new RoomNotAvailableException("This room is not available for the selected dates ! ");
+                }
+            }
+        }
+
         long numberOfNights = ChronoUnit.DAYS.between(checkIn, checkOut);
 
         BigDecimal totalPrice = room.getPricePerNight().multiply(BigDecimal.valueOf(numberOfNights));
@@ -76,7 +97,12 @@ public class ReservationService {
 
         reservationRepository.save(reservation);
 
+        Payment payment = new Payment(reservation.getId(), reservation.getTotalPrice(), PaymentStatus.PENDING, null, null);
+        paymentService.save(payment);
+
         room.setStatus(RoomStatus.MAINTENANCE);
+        roomRepository.save(room.getRoomNumber(), room.getType(), room.getStatus(), room.getCapacity(), room.getPricePerNight());
+
         System.out.println(" << Reservation created successfully >>");
         return reservation;
     }
@@ -187,11 +213,26 @@ public class ReservationService {
         long numberOfNights = ChronoUnit.DAYS.between(checkIn, checkOut);
         BigDecimal totalPrice = room.getPricePerNight().multiply(BigDecimal.valueOf(numberOfNights));
 
+        String oldRoomNumber = reservation.getRoomNumber();
+
         reservation.setCheckIn(checkIn);
         reservation.setCheckOut(checkOut);
         reservation.setRoomNumber(roomId);
         reservation.setNumberOfNights(numberOfNights);
         reservation.setTotalPrice(totalPrice);
+
+        if (!oldRoomNumber.equals(roomId)) {
+
+            room.setStatus(RoomStatus.MAINTENANCE);
+            roomRepository.save(room.getRoomNumber(), room.getType(), room.getStatus(), room.getCapacity(), room.getPricePerNight());
+
+            Room oldRoom = roomRepository.getByNumber(oldRoomNumber);
+
+            if (oldRoom != null) {
+                oldRoom.setStatus(RoomStatus.AVAILABLE);
+                roomRepository.save(oldRoom.getRoomNumber(), oldRoom.getType(), oldRoom.getStatus(), oldRoom.getCapacity(), oldRoom.getPricePerNight());
+            }
+        }
 
         reservationRepository.save(reservation);
         System.out.println(" <<<<< Reservation updated successfully >>>>");

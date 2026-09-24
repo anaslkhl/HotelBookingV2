@@ -1,0 +1,7 @@
+FlywayFreshDbTest.class
+JdbcRoomRepositoryTest.class
+ReservationServiceTest$Check.class
+TestConnection.class
+FlywayMigrationTest.class
+ReservationServiceTest.class
+JdbcReservationRepositoryTest.class

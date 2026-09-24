@@ -23,13 +23,14 @@ public class JdbcClientRepository implements ClientRepository {
     public void save(Client client) {
 
         String sql = """
-                INSERT INTO clients (id, full_name, email, phone, password)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO clients (id, full_name, email, phone, password, sold)
+                VALUES (?, ?, ?, ?, ?, ?)
                 ON CONFLICT (id) DO UPDATE SET
                     full_name = EXCLUDED.full_name,
                     email = EXCLUDED.email,
                     phone = EXCLUDED.phone,
-                    password = EXCLUDED.password
+                    password = EXCLUDED.password,
+                    sold = EXCLUDED.sold
                 """;
 
         try (PreparedStatement stmt = getConnection().prepareStatement(sql)) {
@@ -39,6 +40,7 @@ public class JdbcClientRepository implements ClientRepository {
             stmt.setString(3, client.getEmail());
             stmt.setString(4, client.getPhone());
             stmt.setString(5, client.getPassword());
+            stmt.setBigDecimal(6, client.getSold());
 
             stmt.executeUpdate();
 
@@ -50,7 +52,7 @@ public class JdbcClientRepository implements ClientRepository {
     @Override
     public Client findById(UUID id) {
 
-        String sql = "SELECT id, full_name, email, phone, password FROM clients WHERE id = ?";
+        String sql = "SELECT id, full_name, email, phone, password, sold FROM clients WHERE id = ?";
 
         try (PreparedStatement stmt = getConnection().prepareStatement(sql)) {
 
@@ -69,7 +71,7 @@ public class JdbcClientRepository implements ClientRepository {
     @Override
     public Client findByEmail(String email) {
 
-        String sql = "SELECT id, full_name, email, phone, password FROM clients WHERE email = ?";
+        String sql = "SELECT id, full_name, email, phone, password, sold FROM clients WHERE email = ?";
 
         try (PreparedStatement stmt = getConnection().prepareStatement(sql)) {
 
@@ -142,7 +144,7 @@ public class JdbcClientRepository implements ClientRepository {
     @Override
     public List<Client> findAll() {
 
-        String sql = "SELECT id, full_name, email, phone, password FROM clients";
+        String sql = "SELECT id, full_name, email, phone, password, sold FROM clients";
         List<Client> clients = new ArrayList<>();
 
         try (Statement stmt = getConnection().createStatement();
@@ -169,6 +171,7 @@ public class JdbcClientRepository implements ClientRepository {
         );
 
         client.setUuid((UUID) rs.getObject("id"));
+        client.setSold(rs.getBigDecimal("sold"));
 
         return client;
     }

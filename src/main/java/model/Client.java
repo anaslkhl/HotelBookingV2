@@ -1,5 +1,6 @@
 package model;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 public class Client {
@@ -11,6 +12,7 @@ public class Client {
     private String email;
     private String phone;
     private String password;
+    private BigDecimal sold;
 
     public Client(String fullName, String email, String phone, String password){
 
@@ -19,6 +21,7 @@ public class Client {
         this.phone = phone;
         this.password = password;
         this.id = UUID.randomUUID();
+        this.sold = new BigDecimal("1000.00");
         counter++;
 
     }
@@ -61,5 +64,13 @@ public class Client {
 
     public UUID getId(){
         return  this.id;
+    }
+
+    public BigDecimal getSold() {
+        return sold;
+    }
+
+    public void setSold(BigDecimal sold) {
+        this.sold = sold;
     }
 }
